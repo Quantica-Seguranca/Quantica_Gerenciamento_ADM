@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controlo Unificado - Sentinela Ops</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex">
+
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col justify-between">
+        <div class="p-6">
+            <h1 class="text-xl font-bold text-blue-400 tracking-wider uppercase">Sentinela Ops</h1>
+            <p class="text-xs text-gray-400 mt-1">Painel Administrativo Master</p>
+            
+            <nav class="mt-8 space-y-2">
+                <button onclick="switchTab('usuarios')" id="btn-tab-usuarios" class="tab-btn w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition font-medium text-left">
+                    Controlo de Utilizadores
+                </button>
+                <button onclick="switchTab('rondas')" id="btn-tab-rondas" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-gray-700 text-gray-300 rounded-lg transition text-left">
+                    Sistema de Rondas
+                </button>
+                <button onclick="switchTab('monitoramento')" id="btn-tab-monitoramento" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-gray-700 text-gray-300 rounded-lg transition text-left">
+                    Central de Monitorização
+                </button>
+                <button onclick="switchTab('empregado')" id="btn-tab-empregado" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-gray-700 text-gray-300 rounded-lg transition text-left">
+                    Portal do Empregado
+                </button>
+                <button onclick="switchTab('cliente')" id="btn-tab-cliente" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-gray-700 text-gray-300 rounded-lg transition text-left">
+                    Portal do Cliente
+                </button>
+                <button onclick="switchTab('logs')" id="btn-tab-logs" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-gray-700 text-gray-300 rounded-lg transition text-left border border-dashed border-red-500/30 hidden">
+                    Auditoria (Logs)
+                </button>
+            </nav>
+        </div>
+        
+        <div class="p-4 border-t border-gray-700 bg-gray-800">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span id="user-display-role" class="text-xs font-semibold bg-gray-700 px-2 py-0.5 rounded text-gray-300">A carregar...</span>
+            </div>
+            <p id="user-display-name" class="text-sm font-medium text-gray-200 truncate">Utilizador Não Identificado</p>
+            <button onclick="handleLogout()" class="mt-3 w-full text-center bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white py-1.5 rounded text-xs transition font-semibold">
+                Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        
+        <section id="tab-usuarios" class="tab-content active">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Gestão de Acessos</h2>
+                    <p class="text-gray-400 text-sm">Controle as permissões de todos os sistemas aqui.</p>
+                </div>
+                <button onclick="carregarTabelaUsuarios()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition">
+                    Atualizar Lista
+                </button>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-gray-700/50 text-gray-400 uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-4">Nome do Colaborador</th>
+                            <th class="px-6 py-4">Nível de Acesso (Perfil)</th>
+                            <th class="px-6 py-4">Data de Registo</th>
+                            <th class="px-6 py-4 text-right">Ações Administrativas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-usuarios" class="divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">A carregar dados do Supabase...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tab-rondas" class="tab-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Sistema de Rondas</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <p class="text-gray-400">Integração do painel de monitorização de rondas será carregada aqui.</p>
+            </div>
+        </section>
+
+        <section id="tab-monitoramento" class="tab-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Central de Monitorização</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <p class="text-gray-400">Interface de resposta rápida e logs operacionais virá para aqui.</p>
+            </div>
+        </section>
+
+        <section id="tab-empregado" class="tab-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Gestão de Documentos (RH)</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <p class="text-gray-400">Módulo de upload de recibos de vencimento e documentos.</p>
+            </div>
+        </section>
+
+        <section id="tab-cliente" class="tab-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Gestão de Clientes</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <p class="text-gray-400">Módulo de extração de relatórios e associação de clientes a empresas.</p>
+            </div>
+        </section>
+
+        <section id="tab-logs" class="tab-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Auditoria do Sistema</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-red-900/50">
+                <p class="text-red-400">Apenas o Admin Mestre tem acesso a este registo imutável.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 1. CONFIGURAÇÃO SUPABASE (Substitua pelas suas chaves no Passo 2)
+        const supabaseUrl = 'SUA_URL_SUPABASE';
+        const supabaseKey = 'SUA_CHAVE_ANON_SUPABASE';
+        const sb = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentUserProfile = null;
+
+        // 2. INICIALIZAÇÃO E SEGURANÇA
+        async function inicializarSistema() {
+            const { data: { session }, error: sessionError } = await sb.auth.getSession();
+            
+            if (!session) {
+                document.body.innerHTML = '<div class="p-10 text-center"><h2 class="text-xl text-red-500">Acesso Negado</h2><p class="text-white mt-2">Por favor, faça o login primeiro.</p></div>';
+                // window.location.href = "login.html"; // Descomente quando tiver a página de login
+                return;
+            }
+
+            // Buscar Perfil do Utilizador
+            const { data: perfil, error: dbError } = await sb
+                .from('profiles')
+                .select('full_name, role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (dbError || !perfil) {
+                alert("Erro ao ler credenciais. Verifique a base de dados.");
+                return;
+            }
+
+            currentUserProfile = perfil;
+
+            // Bloqueio de Acesso
+            if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
+                document.body.innerHTML = '<div class="p-10 text-center"><h2 class="text-xl text-red-500">Acesso Restrito</h2><p class="text-white mt-2">O seu perfil não tem permissões de gerência.</p></div>';
+                return;
+            }
+
+            // Atualizar UI com dados do utilizador
+            document.getElementById('user-display-name').innerText = perfil.full_name;
+            document.getElementById('user-display-role').innerText = perfil.role;
+
+            // Mostrar botão de Logs apenas para Admin
+            if (perfil.role === 'Admin') {
+                document.getElementById('btn-tab-logs').classList.remove('hidden');
+            }
+
+            // Carregar dados iniciais
+            carregarTabelaUsuarios();
+        }
+
+        // 3. GESTÃO DE UTILIZADORES
+        async function carregarTabelaUsuarios() {
+            const tbody = document.getElementById('corpo-tabela-usuarios');
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">A carregar...</td></tr>';
+
+            const { data: usuarios, error } = await sb
+                .from('profiles')
+                .select('id, full_name, role, created_at')
+                .order('full_name', { ascending: true });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4">Erro: ${error.message}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            usuarios.forEach(user => {
+                const dataFormatada = new Date(user.created_at).toLocaleDateString('pt-PT');
+                
+                // Lógica de botões: Gerência não pode alterar Admin, Admin pode tudo.
+                let botoesAcao = '';
+                if (currentUserProfile.role === 'Admin' || (currentUserProfile.role === 'Gerência' && user.role !== 'Admin')) {
+                    botoesAcao = `
+                        <select onchange="alterarNivel('${user.id}', this.value)" class="bg-gray-900 border border-gray-600 text-xs rounded px-2 py-1 text-gray-300 focus:outline-none focus:border-blue-500">
+                            <option value="" disabled selected>Alterar Nível...</option>
+                            ${currentUserProfile.role === 'Admin' ? '<option value="Admin">Admin</option>' : ''}
+                            <option value="Gerência">Gerência</option>
+                            <option value="Supervisão">Supervisão</option>
+                            <option value="Analista_ADM">Analista ADM</option>
+                            <option value="Operador">Operador</option>
+                            <option value="Usuário">Utilizador Base</option>
+                            <option value="Cliente">Cliente</option>
+                        </select>
+                    `;
+                } else {
+                    botoesAcao = '<span class="text-xs text-gray-500">Restrito</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-700/50 transition">
+                        <td class="px-6 py-4 font-medium">${user.full_name}</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-blue-900/50 text-blue-300 border border-blue-800 px-2 py-1 rounded text-xs">${user.role}</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-400">${dataFormatada}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            ${botoesAcao}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function alterarNivel(userId, novaRole) {
+            if(!confirm(`Tem a certeza que deseja alterar o nível deste utilizador para ${novaRole}?`)) return;
+
+            const { error } = await sb
+                .from('profiles')
+                .update({ role: novaRole })
+                .eq('id', userId);
+
+            if (error) {
+                alert("Falha ao alterar permissão: O nível de segurança do banco de dados bloqueou a ação.");
+            } else {
+                carregarTabelaUsuarios();
+            }
+        }
+
+        // 4. FUNÇÕES DE INTERFACE
+        function switchTab(tabId) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Remover destaque dos botões
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white');
+                el.classList.add('hover:bg-gray-700', 'text-gray-300');
+            });
+
+            // Mostrar aba selecionada
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            // Destacar botão clicado
+            const btn = document.getElementById(`btn-tab-${tabId}`);
+            if(btn) {
+                btn.classList.remove('hover:bg-gray-700', 'text-gray-300');
+                btn.classList.add('bg-blue-600', 'text-white');
+            }
+        }
+
+        async function handleLogout() {
+            await sb.auth.signOut();
+            window.location.reload();
+        }
+
+        // Iniciar
+        window.addEventListener('DOMContentLoaded', inicializarSistema);
+    </script>
+</body>
+</html>
