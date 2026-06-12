@@ -3,141 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Master - Sentinela Ops</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Login - Sentinela Ops</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex">
+<body class="bg-gray-900 flex items-center justify-center min-h-screen">
 
-    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col justify-between">
-        <div class="p-6">
-            <h1 class="text-xl font-bold text-blue-400 tracking-wider uppercase">Sentinela Ops</h1>
-            <p class="text-xs text-gray-400 mt-1">Painel Administrativo Master</p>
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-700">
+        <h2 class="text-2xl font-bold text-white text-center mb-6 uppercase tracking-wider text-blue-400">Sentinela Ops</h2>
+        
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-400 text-sm mb-1">E-mail corporativo</label>
+                <input type="email" id="email" required class="w-full bg-gray-900 border border-gray-600 text-white rounded px-4 py-2 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-400 text-sm mb-1">Senha</label>
+                <input type="password" id="password" required class="w-full bg-gray-900 border border-gray-600 text-white rounded px-4 py-2 focus:outline-none focus:border-blue-500">
+            </div>
             
-            <nav class="mt-8 space-y-2">
-                <button class="w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition font-medium text-left">
-                    Início / Meu Perfil
-                </button>
-                <div class="pt-4 border-t border-gray-700/50 mt-4">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest px-4 font-bold">Próximos Módulos</p>
-                    <p class="text-xs text-gray-400 px-4 py-2 italic">Aguardando ativação...</p>
-                </div>
-            </nav>
-        </div>
-        
-        <div class="p-4 border-t border-gray-700 bg-gray-800">
-            <div class="flex items-center space-x-3 mb-2">
-                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span id="user-display-role" class="text-xs font-semibold bg-gray-700 px-2 py-0.5 rounded text-gray-300">A carregar...</span>
-            </div>
-            <p id="user-display-name" class="text-sm font-medium text-gray-200 truncate">A carregar...</p>
-            <button onclick="handleLogout()" class="mt-3 w-full text-center bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white py-1.5 rounded text-xs transition font-semibold">
-                Sair do Sistema
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition mt-4">
+                Acessar Sistema
             </button>
-        </div>
-    </aside>
+        </form>
 
-    <main class="flex-1 p-8 flex flex-col justify-start">
-        
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-white">Bem-vindo ao Painel Central</h2>
-            <p class="text-gray-400 text-sm mt-1">Sua conexão com o Supabase está ativa e segura.</p>
-        </div>
-
-        <div class="max-w-2xl bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
-            <div class="flex items-center space-x-4 border-b border-gray-700 pb-4 mb-4">
-                <div class="h-14 w-14 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xl uppercase" id="avatar-letras">
-                    --
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-white" id="perfil-nome">Carregando nome...</h3>
-                    <span class="inline-block bg-blue-900/60 text-blue-300 border border-blue-700 px-2 py-0.5 rounded text-xs font-semibold mt-1">Admin Master</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
-                <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                    <p class="text-gray-500 text-xs uppercase font-bold">Identificador Único (UID)</p>
-                    <p class="font-mono text-xs text-gray-400 mt-1 truncate" id="perfil-id">---</p>
-                </div>
-                <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                    <p class="text-gray-500 text-xs uppercase font-bold">Nível de Permissão</p>
-                    <p class="text-green-400 font-semibold mt-1">Acesso Total (Ações Master)</p>
-                </div>
-            </div>
-        </div>
-
-    </main>
+        <div id="msg-erro" class="mt-4 text-red-400 text-sm text-center hidden"></div>
+    </div>
 
     <script>
+
         // Configuração de Credenciais Homologadas
         const supabaseUrl = 'https://mhhsbdwewohiisnhwxpy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oaHNiZHdld29oaWlzbmh3eHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDc4NTMsImV4cCI6MjA5Njc4Mzg1M30.sBcHdDzwq9yL7pIeGllJhwoR9nxIXrSHRAnr6Hq-Zik'; 
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Verificação de Autenticação e Carregamento de Perfil
-        async function inicializarPainel() {
-            try {
-                const { data: { session }, error: sessionError } = await sb.auth.getSession();
-                if (sessionError) throw sessionError;
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = e.target.querySelector('button');
+            const msgErro = document.getElementById('msg-erro');
 
-                // Redireciona para o login caso não exista sessão ativa
-                if (!session) {
-                    window.location.href = "login.html";
-                    return;
-                }
+            btn.innerText = 'Autenticando...';
+            btn.disabled = true;
+            msgErro.classList.add('hidden');
 
-                // Busca as informações do perfil na tabela 'profiles'
-                const { data: perfil, error: dbError } = await sb
-                    .from('profiles')
-                    .select('id, full_name, role')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
-                if (dbError) throw dbError;
-
-                // Caso a conta auth exista mas não possua registro em profiles
-                if (!perfil) {
-                    alert("Erro: Linha de perfil correspondente não localizada na tabela 'profiles'.");
-                    return;
-                }
-
-                // Bloqueio de segurança estrito para níveis inferiores
-                if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
-                    document.body.innerHTML = `
-                        <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
-                            <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
-                            <p class="text-gray-300 mt-2">O seu nível atual de acesso (${perfil.role}) não tem permissão para este painel.</p>
-                            <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition">Sair</button>
-                        </div>`;
-                    return;
-                }
-
-                // Injeta as informações do Admin na tela de forma limpa
-                const nomeExibicao = perfil.full_name || 'Admin Master';
-                
-                document.getElementById('user-display-name').innerText = nomeExibicao;
-                document.getElementById('user-display-role').innerText = perfil.role;
-                document.getElementById('perfil-nome').innerText = nomeExibicao;
-                document.getElementById('perfil-id').innerText = perfil.id;
-                
-                // Gera as letras iniciais para o Avatar visual
-                const letras = nomeExibicao.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-                document.getElementById('avatar-letras').innerText = letras;
-
-            } catch (err) {
-                console.error("Falha ao inicializar o ecossistema:", err);
-                alert("Erro de conexão com o banco de dados: " + (err.message || err));
+            if (error) {
+                msgErro.innerText = "Falha no login: E-mail ou senha incorretos.";
+                msgErro.classList.remove('hidden');
+                btn.innerText = 'Acessar Sistema';
+                btn.disabled = false;
+            } else {
+                // Login com sucesso, redireciona para o painel de controle
+                window.location.href = 'index.html';
             }
-        }
-
-        async function handleLogout() {
-            await sb.auth.signOut();
-            window.location.href = "login.html";
-        }
-
-        window.addEventListener('DOMContentLoaded', inicializarPainel);
+        });
     </script>
 </body>
 </html>
