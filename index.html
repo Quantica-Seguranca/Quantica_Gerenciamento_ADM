@@ -132,21 +132,21 @@
         let currentUserProfile = null;
 
         // 2. INICIALIZAÇÃO E SEGURANÇA
-        async function inicializarSistema() {
-            const { data: { session }, error: sessionError } = await sb.auth.getSession();
-            
-            if (!session) {
-                document.body.innerHTML = '<div class="p-10 text-center"><h2 class="text-xl text-red-500">Acesso Negado</h2><p class="text-white mt-2">Por favor, faça o login primeiro.</p></div>';
-                // window.location.href = "login.html"; // Descomente quando tiver a página de login
-                return;
-            }
+async function inicializarSistema() {
+    const { data: { session }, error: sessionError } = await sb.auth.getSession();
+    
+    // Se não houver sessão ativa, redireciona imediatamente para a tela de login
+    if (!session) {
+        window.location.href = "login.html";
+        return;
+    }
 
-            // Buscar Perfil do Utilizador
-            const { data: perfil, error: dbError } = await sb
-                .from('profiles')
-                .select('full_name, role')
-                .eq('id', session.user.id)
-                .single();
+    // Buscar Perfil do Utilizador
+    const { data: perfil, error: dbError } = await sb
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', session.user.id)
+        .single();
 
             if (dbError || !perfil) {
                 alert("Erro ao ler credenciais. Verifique a base de dados.");
