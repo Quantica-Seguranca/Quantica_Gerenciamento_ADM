@@ -131,46 +131,68 @@
 
         let currentUserProfile = null;
 
-        // 2. INICIALIZAÇÃO E SEGURANÇA
-async function inicializarSistema() {
-    const { data: { session }, error: sessionError } = await sb.auth.getSession();
-    
-    // Se não houver sessão ativa, redireciona imediatamente para a tela de login
-    if (!session) {
-        window.location.href = "login.html";
-        return;
-    }
+        // 2. INICIALIZAÇÃO E SEGURANÇA OTIMIZADA
+        async function inicializarSistema() {
+            const tbody = document.getElementById('corpo-tabela-usuarios');
+            
+            const { data: { session }, error: sessionError } = await sb.auth.getSession();
+            
+            if (sessionError) {
+                console.error("Erro de sessão:", sessionError);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Autenticação: ${sessionError.message}</td></tr>`;
+                return;
+            }
 
-    // Buscar Perfil do Utilizador
-    const { data: perfil, error: dbError } = await sb
-        .from('profiles')
-        .select('full_name, role')
-        .eq('id', session.user.id)
-        .single();
+            if (!session) {
+                // Se não houver sessão, redireciona para a tela de login
+                window.location.href = "login.html";
+                return;
+            }
 
-            if (dbError || !perfil) {
-                alert("Erro ao ler credenciais. Verifique a base de dados.");
+            // Buscar Perfil do Utilizador de forma segura
+            const { data: perfil, error: dbError } = await sb
+                .from('profiles')
+                .select('full_name, role')
+                .eq('id', session.user.id)
+                .maybeSingle(); // Evita quebras se o registro não existir
+
+            if (dbError) {
+                console.error("Erro de banco:", dbError);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Banco de Dados (RLS): ${dbError.message}</td></tr>`;
+                return;
+            }
+
+            // Caso o usuário exista no Auth, mas a linha no Table Editor de Profiles suma
+            if (!perfil) {
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">⚠️ Vínculo não encontrado!<br><span class="text-xs text-gray-400">O seu e-mail está autenticado, mas não existe nenhuma linha correspondente para o seu ID na tabela 'profiles'. Acesse o Supabase e crie o seu perfil manualmente.</span></td></tr>`;
                 return;
             }
 
             currentUserProfile = perfil;
 
-            // Bloqueio de Acesso
+            // Bloqueio de Acesso Baseado em Perfis (RBAC)
             if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
-                document.body.innerHTML = '<div class="p-10 text-center"><h2 class="text-xl text-red-500">Acesso Restrito</h2><p class="text-white mt-2">O seu perfil não tem permissões de gerência.</p></div>';
+                document.body.innerHTML = `
+                    <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
+                        <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
+                        <p class="text-gray-300 mt-2">O seu perfil atual (${perfil.role}) não possui credenciais para visualizar este painel.</p>
+                        <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition font-medium">Sair do Sistema</button>
+                    </div>
+                `;
                 return;
             }
 
-            // Atualizar UI com dados do utilizador
-            document.getElementById('user-display-name').innerText = perfil.full_name;
+            // Atualizar elementos visuais com dados do utilizador
+            document.getElementById('user-display-name').innerText = perfil.full_name || 'Usuário Sem Nome';
             document.getElementById('user-display-role').innerText = perfil.role;
 
-            // Mostrar botão de Logs apenas para Admin
+            // Mostrar botão de Logs apenas para Admin Mestre
             if (perfil.role === 'Admin') {
-                document.getElementById('btn-tab-logs').classList.remove('hidden');
+                const btnLogs = document.getElementById('btn-tab-logs');
+                if (btnLogs) btnLogs.classList.remove('hidden');
             }
 
-            // Carregar dados iniciais
+            // Se tudo estiver correto, carrega a tabela de gerenciamento
             carregarTabelaUsuarios();
         }
 
