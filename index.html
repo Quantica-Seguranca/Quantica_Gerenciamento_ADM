@@ -90,25 +90,16 @@
             <iframe src="sistemas/rondas.html" class="w-full h-[85vh] border-none rounded-lg shadow-lg"></iframe>
         </section>
 
-        <section id="tab-monitoramento" class="tab-content">
-            <h2 class="text-2xl font-bold text-white mb-4">Central de Monitorização</h2>
-            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <p class="text-gray-400">Interface de resposta rápida e logs operacionais virá para aqui.</p>
-            </div>
+        <section id="tab-monitoramento" class="tab-content h-full">
+            <iframe src="sistemas/monitoramento.html" class="w-full h-[85vh] border-none rounded-lg shadow-lg"></iframe>
         </section>
 
-        <section id="tab-empregado" class="tab-content">
-            <h2 class="text-2xl font-bold text-white mb-4">Gestão de Documentos (RH)</h2>
-            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <p class="text-gray-400">Módulo de upload de recibos de vencimento e documentos.</p>
-            </div>
+        <section id="tab-empregado" class="tab-content h-full">
+            <iframe src="sistemas/empregado.html" class="w-full h-[85vh] border-none rounded-lg shadow-lg"></iframe>
         </section>
 
-        <section id="tab-cliente" class="tab-content">
-            <h2 class="text-2xl font-bold text-white mb-4">Gestão de Clientes</h2>
-            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <p class="text-gray-400">Módulo de extração de relatórios e associação de clientes a empresas.</p>
-            </div>
+        <section id="tab-cliente" class="tab-content h-full">
+            <iframe src="sistemas/cliente.html" class="w-full h-[85vh] border-none rounded-lg shadow-lg"></iframe>
         </section>
 
         <section id="tab-logs" class="tab-content">
@@ -121,11 +112,11 @@
     </main>
 
     <script>
-        // 1. CONFIGURAÇÃO SUPABASE
+        // 1. CONFIGURAÇÃO SUPABASE COM AS CHAVES FORNECIDAS
         const supabaseUrl = 'https://mhhsbdwewohiisnhwxpy.supabase.co';
-        const supabaseKey = 'COLE_AQUI_A_SUA_CHAVE_ANON_GIGANTE'; // <-- ATENÇÃO: COLA A SUA CHAVE AQUI!
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oaHNiZHdld29oaWlzbmh3eHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDc4NTMsImV4cCI6MjA5Njc4Mzg1M30.sBcHdDzwq9yL7pIeGllJhwoR9nxIXrSHRAnr6Hq-Zik'; 
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
-
+        
         let currentUserProfile = null;
 
         // 2. INICIALIZAÇÃO E SEGURANÇA
@@ -133,7 +124,6 @@
             const tbody = document.getElementById('corpo-tabela-usuarios');
             try {
                 const { data: { session }, error: sessionError } = await sb.auth.getSession();
-                
                 if (sessionError) throw sessionError;
 
                 if (!session) {
@@ -148,7 +138,7 @@
                     .maybeSingle();
 
                 if (dbError) throw dbError;
-
+                
                 if (!perfil) {
                     if (tbody) {
                         tbody.innerHTML = `<tr><td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">⚠️ Perfil não localizado na base de dados! (Siga o Passo 1 das instruções)</td></tr>`;
@@ -157,12 +147,13 @@
                 }
 
                 currentUserProfile = perfil;
-
+                
                 if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
                     document.body.innerHTML = `
                         <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
                             <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
                             <p class="text-gray-300 mt-2">O seu perfil atual não tem autorização para aceder.</p>
+                            <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition font-medium">Sair do Sistema</button>
                         </div>`;
                     return;
                 }
@@ -180,7 +171,6 @@
                 }
 
                 carregarTabelaUsuarios();
-
             } catch (err) {
                 console.error("Erro crítico de inicialização:", err);
                 if (tbody) {
@@ -195,13 +185,12 @@
             if (!tbody) return;
             
             tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">A carregar...</td></tr>';
-
             try {
                 const { data: usuarios, error } = await sb
                     .from('profiles')
                     .select('id, full_name, role, created_at')
                     .order('full_name', { ascending: true });
-
+                    
                 if (error) throw error;
 
                 tbody.innerHTML = '';
@@ -248,7 +237,6 @@
         // 4. ALTERAR NÍVEL E TABS
         async function alterarNivel(userId, novaRole) {
             if(!confirm(`Mudar o nível deste utilizador para ${novaRole}?`)) return;
-
             try {
                 const { error } = await sb.from('profiles').update({ role: novaRole }).eq('id', userId);
                 if (error) throw error;
@@ -264,7 +252,6 @@
                 el.classList.remove('bg-blue-600', 'text-white');
                 el.classList.add('hover:bg-gray-700', 'text-gray-300');
             });
-
             const targetTab = document.getElementById(`tab-${tabId}`);
             if (targetTab) targetTab.classList.add('active');
             
