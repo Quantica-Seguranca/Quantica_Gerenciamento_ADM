@@ -121,14 +121,14 @@
     </main>
 
     <script>
-        // Configuração Conectada às suas chaves homologadas
+        // 1. CONFIGURAÇÃO SUPABASE
         const supabaseUrl = 'https://mhhsbdwewohiisnhwxpy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oaHNiZHdld29oaWlzbmh3eHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDc4NTMsImV4cCI6MjA5Njc4Mzg1M30.sBcHdDzwq9yL7pIeGllJhwoR9nxIXrSHRAnr6Hq-Zik';
+        const supabaseKey = 'COLE_AQUI_A_SUA_CHAVE_ANON_GIGANTE'; // <-- ATENÇÃO: COLA A SUA CHAVE AQUI!
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
         let currentUserProfile = null;
 
-        // Inicialização protegida contra travamentos
+        // 2. INICIALIZAÇÃO E SEGURANÇA
         async function inicializarSistema() {
             const tbody = document.getElementById('corpo-tabela-usuarios');
             try {
@@ -136,13 +136,11 @@
                 
                 if (sessionError) throw sessionError;
 
-                // Se não houver sessão ativa, redireciona imediatamente
                 if (!session) {
                     window.location.href = "login.html";
                     return;
                 }
 
-                // Busca o perfil do usuário atual
                 const { data: perfil, error: dbError } = await sb
                     .from('profiles')
                     .select('full_name, role')
@@ -151,37 +149,24 @@
 
                 if (dbError) throw dbError;
 
-                // Diagnóstico para o caso de o utilizador não ter linha criada no Table Editor
                 if (!perfil) {
                     if (tbody) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">
-                                    ⚠️ Perfil não localizado na base de dados!<br>
-                                    <span class="text-xs text-gray-400 block mt-2">
-                                        A sua conta de autenticação existe, mas não há nenhuma linha associada a ela na tabela 'profiles'.<br>
-                                        Aceda ao <b>Table Editor -> profiles</b> no painel do Supabase, crie uma linha com o seu ID de utilizador e mude a função para <b>Admin</b>.
-                                    </span>
-                                </td>
-                            </tr>`;
+                        tbody.innerHTML = `<tr><td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">⚠️ Perfil não localizado na base de dados! (Siga o Passo 1 das instruções)</td></tr>`;
                     }
                     return;
                 }
 
                 currentUserProfile = perfil;
 
-                // Validação de segurança Hierárquica (RBAC)
                 if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
                     document.body.innerHTML = `
                         <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
                             <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
-                            <p class="text-gray-300 mt-2">O seu perfil de acesso atual (${perfil.role}) não possui autorização para este painel.</p>
-                            <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition font-medium">Sair do Sistema</button>
+                            <p class="text-gray-300 mt-2">O seu perfil atual não tem autorização para aceder.</p>
                         </div>`;
                     return;
                 }
 
-                // Renderização segura dos dados do perfil na interface
                 if (document.getElementById('user-display-name')) {
                     document.getElementById('user-display-name').innerText = perfil.full_name || 'Utilizador Sem Nome';
                 }
@@ -189,24 +174,22 @@
                     document.getElementById('user-display-role').innerText = perfil.role;
                 }
 
-                // Desbloqueia aba de auditoria apenas se for Admin mestre
                 if (perfil.role === 'Admin') {
                     const btnLogs = document.getElementById('btn-tab-logs');
                     if (btnLogs) btnLogs.classList.remove('hidden');
                 }
 
-                // Avança para carregar a listagem global
                 carregarTabelaUsuarios();
 
             } catch (err) {
                 console.error("Erro crítico de inicialização:", err);
                 if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Conectividade/Banco: ${err.message || err}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center">Erro: ${err.message || err}</td></tr>`;
                 }
             }
         }
 
-        // Listagem de usuários com tratamento de erros integrado
+        // 3. CARREGAR TABELA
         async function carregarTabelaUsuarios() {
             const tbody = document.getElementById('corpo-tabela-usuarios');
             if (!tbody) return;
@@ -258,23 +241,20 @@
                 });
             } catch (err) {
                 console.error("Erro ao processar dados da tabela:", err);
-                tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Falha ao ler perfis (Erro RLS): ${err.message || err}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center">Falha: ${err.message || err}</td></tr>`;
             }
         }
 
+        // 4. ALTERAR NÍVEL E TABS
         async function alterarNivel(userId, novaRole) {
-            if(!confirm(`Tem a certeza que deseja alterar o nível para ${novaRole}?`)) return;
+            if(!confirm(`Mudar o nível deste utilizador para ${novaRole}?`)) return;
 
             try {
-                const { error } = await sb
-                    .from('profiles')
-                    .update({ role: novaRole })
-                    .eq('id', userId);
-
+                const { error } = await sb.from('profiles').update({ role: novaRole }).eq('id', userId);
                 if (error) throw error;
                 carregarTabelaUsuarios();
             } catch (err) {
-                alert("Falha ao alterar permissão: " + (err.message || err));
+                alert("Falha: " + (err.message || err));
             }
         }
 
