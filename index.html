@@ -86,11 +86,8 @@
             </div>
         </section>
 
-        <section id="tab-rondas" class="tab-content">
-            <h2 class="text-2xl font-bold text-white mb-4">Sistema de Rondas</h2>
-            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
-                <p class="text-gray-400">Integração do painel de monitorização de rondas será carregada aqui.</p>
-            </div>
+        <section id="tab-rondas" class="tab-content h-full">
+            <iframe src="sistemas/rondas.html" class="w-full h-[85vh] border-none rounded-lg shadow-lg"></iframe>
         </section>
 
         <section id="tab-monitoramento" class="tab-content">
@@ -124,159 +121,173 @@
     </main>
 
     <script>
-        // 1. CONFIGURAÇÃO SUPABASE
+        // Configuração Conectada às suas chaves homologadas
         const supabaseUrl = 'https://mhhsbdwewohiisnhwxpy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oaHNiZHdld29oaWlzbmh3eHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDc4NTMsImV4cCI6MjA5Njc4Mzg1M30.sBcHdDzwq9yL7pIeGllJhwoR9nxIXrSHRAnr6Hq-Zik';
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
         let currentUserProfile = null;
 
-        // 2. INICIALIZAÇÃO E SEGURANÇA OTIMIZADA
+        // Inicialização protegida contra travamentos
         async function inicializarSistema() {
             const tbody = document.getElementById('corpo-tabela-usuarios');
-            
-            const { data: { session }, error: sessionError } = await sb.auth.getSession();
-            
-            if (sessionError) {
-                console.error("Erro de sessão:", sessionError);
-                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Autenticação: ${sessionError.message}</td></tr>`;
-                return;
-            }
-
-            if (!session) {
-                // Se não houver sessão, redireciona para a tela de login
-                window.location.href = "login.html";
-                return;
-            }
-
-            // Buscar Perfil do Utilizador de forma segura
-            const { data: perfil, error: dbError } = await sb
-                .from('profiles')
-                .select('full_name, role')
-                .eq('id', session.user.id)
-                .maybeSingle(); // Evita quebras se o registro não existir
-
-            if (dbError) {
-                console.error("Erro de banco:", dbError);
-                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Banco de Dados (RLS): ${dbError.message}</td></tr>`;
-                return;
-            }
-
-            // Caso o usuário exista no Auth, mas a linha no Table Editor de Profiles suma
-            if (!perfil) {
-                if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">⚠️ Vínculo não encontrado!<br><span class="text-xs text-gray-400">O seu e-mail está autenticado, mas não existe nenhuma linha correspondente para o seu ID na tabela 'profiles'. Acesse o Supabase e crie o seu perfil manualmente.</span></td></tr>`;
-                return;
-            }
-
-            currentUserProfile = perfil;
-
-            // Bloqueio de Acesso Baseado em Perfis (RBAC)
-            if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
-                document.body.innerHTML = `
-                    <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
-                        <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
-                        <p class="text-gray-300 mt-2">O seu perfil atual (${perfil.role}) não possui credenciais para visualizar este painel.</p>
-                        <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition font-medium">Sair do Sistema</button>
-                    </div>
-                `;
-                return;
-            }
-
-            // Atualizar elementos visuais com dados do utilizador
-            document.getElementById('user-display-name').innerText = perfil.full_name || 'Usuário Sem Nome';
-            document.getElementById('user-display-role').innerText = perfil.role;
-
-            // Mostrar botão de Logs apenas para Admin Mestre
-            if (perfil.role === 'Admin') {
-                const btnLogs = document.getElementById('btn-tab-logs');
-                if (btnLogs) btnLogs.classList.remove('hidden');
-            }
-
-            // Se tudo estiver correto, carrega a tabela de gerenciamento
-            carregarTabelaUsuarios();
-        }
-
-        // 3. GESTÃO DE UTILIZADORES
-        async function carregarTabelaUsuarios() {
-            const tbody = document.getElementById('corpo-tabela-usuarios');
-            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">A carregar...</td></tr>';
-
-            const { data: usuarios, error } = await sb
-                .from('profiles')
-                .select('id, full_name, role, created_at')
-                .order('full_name', { ascending: true });
-
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4">Erro: ${error.message}</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = '';
-            usuarios.forEach(user => {
-                const dataFormatada = new Date(user.created_at).toLocaleDateString('pt-PT');
+            try {
+                const { data: { session }, error: sessionError } = await sb.auth.getSession();
                 
-                // Lógica de botões: Gerência não pode alterar Admin, Admin pode tudo.
-                let botoesAcao = '';
-                if (currentUserProfile.role === 'Admin' || (currentUserProfile.role === 'Gerência' && user.role !== 'Admin')) {
-                    botoesAcao = `
-                        <select onchange="alterarNivel('${user.id}', this.value)" class="bg-gray-900 border border-gray-600 text-xs rounded px-2 py-1 text-gray-300 focus:outline-none focus:border-blue-500">
-                            <option value="" disabled selected>Alterar Nível...</option>
-                            ${currentUserProfile.role === 'Admin' ? '<option value="Admin">Admin</option>' : ''}
-                            <option value="Gerência">Gerência</option>
-                            <option value="Supervisão">Supervisão</option>
-                            <option value="Analista_ADM">Analista ADM</option>
-                            <option value="Operador">Operador</option>
-                            <option value="Usuário">Utilizador Base</option>
-                            <option value="Cliente">Cliente</option>
-                        </select>
-                    `;
-                } else {
-                    botoesAcao = '<span class="text-xs text-gray-500">Restrito</span>';
+                if (sessionError) throw sessionError;
+
+                // Se não houver sessão ativa, redireciona imediatamente
+                if (!session) {
+                    window.location.href = "login.html";
+                    return;
                 }
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-700/50 transition">
-                        <td class="px-6 py-4 font-medium">${user.full_name}</td>
-                        <td class="px-6 py-4">
-                            <span class="bg-blue-900/50 text-blue-300 border border-blue-800 px-2 py-1 rounded text-xs">${user.role}</span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-400">${dataFormatada}</td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            ${botoesAcao}
-                        </td>
-                    </tr>
-                `;
-            });
+                // Busca o perfil do usuário atual
+                const { data: perfil, error: dbError } = await sb
+                    .from('profiles')
+                    .select('full_name, role')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (dbError) throw dbError;
+
+                // Diagnóstico para o caso de o utilizador não ter linha criada no Table Editor
+                if (!perfil) {
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="text-yellow-500 p-6 text-center font-semibold">
+                                    ⚠️ Perfil não localizado na base de dados!<br>
+                                    <span class="text-xs text-gray-400 block mt-2">
+                                        A sua conta de autenticação existe, mas não há nenhuma linha associada a ela na tabela 'profiles'.<br>
+                                        Aceda ao <b>Table Editor -> profiles</b> no painel do Supabase, crie uma linha com o seu ID de utilizador e mude a função para <b>Admin</b>.
+                                    </span>
+                                </td>
+                            </tr>`;
+                    }
+                    return;
+                }
+
+                currentUserProfile = perfil;
+
+                // Validação de segurança Hierárquica (RBAC)
+                if (perfil.role !== 'Admin' && perfil.role !== 'Gerência') {
+                    document.body.innerHTML = `
+                        <div class="p-10 text-center min-h-screen flex flex-col items-center justify-center bg-gray-900">
+                            <h2 class="text-2xl text-red-500 font-bold">Acesso Restrito</h2>
+                            <p class="text-gray-300 mt-2">O seu perfil de acesso atual (${perfil.role}) não possui autorização para este painel.</p>
+                            <button onclick="handleLogout()" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition font-medium">Sair do Sistema</button>
+                        </div>`;
+                    return;
+                }
+
+                // Renderização segura dos dados do perfil na interface
+                if (document.getElementById('user-display-name')) {
+                    document.getElementById('user-display-name').innerText = perfil.full_name || 'Utilizador Sem Nome';
+                }
+                if (document.getElementById('user-display-role')) {
+                    document.getElementById('user-display-role').innerText = perfil.role;
+                }
+
+                // Desbloqueia aba de auditoria apenas se for Admin mestre
+                if (perfil.role === 'Admin') {
+                    const btnLogs = document.getElementById('btn-tab-logs');
+                    if (btnLogs) btnLogs.classList.remove('hidden');
+                }
+
+                // Avança para carregar a listagem global
+                carregarTabelaUsuarios();
+
+            } catch (err) {
+                console.error("Erro crítico de inicialização:", err);
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Erro de Conectividade/Banco: ${err.message || err}</td></tr>`;
+                }
+            }
+        }
+
+        // Listagem de usuários com tratamento de erros integrado
+        async function carregarTabelaUsuarios() {
+            const tbody = document.getElementById('corpo-tabela-usuarios');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">A carregar...</td></tr>';
+
+            try {
+                const { data: usuarios, error } = await sb
+                    .from('profiles')
+                    .select('id, full_name, role, created_at')
+                    .order('full_name', { ascending: true });
+
+                if (error) throw error;
+
+                tbody.innerHTML = '';
+                usuarios.forEach(user => {
+                    const dataFormatada = new Date(user.created_at).toLocaleDateString('pt-PT');
+                    
+                    let botoesAcao = '';
+                    if (currentUserProfile.role === 'Admin' || (currentUserProfile.role === 'Gerência' && user.role !== 'Admin')) {
+                        botoesAcao = `
+                            <select onchange="alterarNivel('${user.id}', this.value)" class="bg-gray-900 border border-gray-600 text-xs rounded px-2 py-1 text-gray-300 focus:outline-none focus:border-blue-500">
+                                <option value="" disabled selected>Alterar Nível...</option>
+                                ${currentUserProfile.role === 'Admin' ? '<option value="Admin">Admin</option>' : ''}
+                                <option value="Gerência">Gerência</option>
+                                <option value="Supervisão">Supervisão</option>
+                                <option value="Analista_ADM">Analista ADM</option>
+                                <option value="Operador">Operador</option>
+                                <option value="Usuário">Utilizador Base</option>
+                                <option value="Cliente">Cliente</option>
+                            </select>
+                        `;
+                    } else {
+                        botoesAcao = '<span class="text-xs text-gray-500">Restrito</span>';
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-700/50 transition">
+                            <td class="px-6 py-4 font-medium">${user.full_name}</td>
+                            <td class="px-6 py-4">
+                                <span class="bg-blue-900/50 text-blue-300 border border-blue-800 px-2 py-1 rounded text-xs">${user.role}</span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-400">${dataFormatada}</td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                ${botoesAcao}
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Erro ao processar dados da tabela:", err);
+                tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 p-4 text-center font-semibold">Falha ao ler perfis (Erro RLS): ${err.message || err}</td></tr>`;
+            }
         }
 
         async function alterarNivel(userId, novaRole) {
-            if(!confirm(`Tem a certeza que deseja alterar o nível deste utilizador para ${novaRole}?`)) return;
+            if(!confirm(`Tem a certeza que deseja alterar o nível para ${novaRole}?`)) return;
 
-            const { error } = await sb
-                .from('profiles')
-                .update({ role: novaRole })
-                .eq('id', userId);
+            try {
+                const { error } = await sb
+                    .from('profiles')
+                    .update({ role: novaRole })
+                    .eq('id', userId);
 
-            if (error) {
-                alert("Falha ao alterar permissão: O nível de segurança do banco de dados bloqueou a ação.");
-            } else {
+                if (error) throw error;
                 carregarTabelaUsuarios();
+            } catch (err) {
+                alert("Falha ao alterar permissão: " + (err.message || err));
             }
         }
 
-        // 4. FUNÇÕES DE INTERFACE
         function switchTab(tabId) {
-            // Esconder todas as abas
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Remover destaque dos botões
             document.querySelectorAll('.tab-btn').forEach(el => {
                 el.classList.remove('bg-blue-600', 'text-white');
                 el.classList.add('hover:bg-gray-700', 'text-gray-300');
             });
 
-            // Mostrar aba selecionada
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            // Destacar botão clicado
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) targetTab.classList.add('active');
+            
             const btn = document.getElementById(`btn-tab-${tabId}`);
             if(btn) {
                 btn.classList.remove('hover:bg-gray-700', 'text-gray-300');
@@ -289,7 +300,6 @@
             window.location.reload();
         }
 
-        // Iniciar
         window.addEventListener('DOMContentLoaded', inicializarSistema);
     </script>
 </body>
