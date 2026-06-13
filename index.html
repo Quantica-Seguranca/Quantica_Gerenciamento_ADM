@@ -7,7 +7,13 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
+
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+    </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex">
 
     <aside class="w-64 bg-[#2C3E50] border-r border-gray-700 flex flex-col justify-between text-white shadow-xl z-10">
@@ -16,16 +22,13 @@
             <p class="text-xs text-gray-400 mt-1">Admin Master & Governança</p>
             
             <nav class="mt-8 space-y-2">
-                <button class="w-full flex items-center px-4 py-3 bg-[#34495E] text-white rounded-lg transition font-medium text-left border-l-4 border-green-500">
-                    👥 Gestão de Privilégios
-                </button>
-                <button class="w-full flex items-center px-4 py-3 hover:bg-[#34495E] text-gray-300 rounded-lg transition font-medium text-left">
-                    📊 Auditoria de Logs
-                </button>
-                <button class="w-full flex items-center px-4 py-3 hover:bg-[#34495E] text-gray-300 rounded-lg transition font-medium text-left">
-                    ⚙️ Configurações Globais
-                </button>
-            </nav>
+    <button onclick="mudarAba('governanca')" id="btn-governanca" class="tab-btn w-full flex items-center px-4 py-3 bg-[#34495E] text-white rounded-lg transition font-medium text-left border-l-4 border-green-500">
+        👥 Gestão de Privilégios
+    </button>
+    <button onclick="mudarAba('rondas')" id="btn-rondas" class="tab-btn w-full flex items-center px-4 py-3 hover:bg-[#34495E] text-gray-300 rounded-lg transition font-medium text-left">
+        📍 Sistema de Rondas
+    </button>
+</nav>
         </div>
         
         <div class="p-4 bg-[#1A252F]">
@@ -39,92 +42,99 @@
 
     <main class="flex-1 bg-gray-50 overflow-y-auto p-8">
         
-        <div class="mb-6 flex justify-between items-end border-b pb-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Gestão de Privilégios (RBAC + ABAC)</h2>
-                <p class="text-gray-500 text-sm mt-1">Controle de acessos modulares para colaboradores.</p>
-            </div>
-            <div>
-                <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-300" id="status-edicao">Selecione um usuário abaixo</span>
-            </div>
-        </div>
-
-        <div class="bg-white border rounded-xl shadow-sm p-6 mb-8" id="painel-edicao" style="display: none;">
-            <input type="hidden" id="edit-user-id">
+        <section id="aba-governanca" class="tab-content active">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="mb-6 flex justify-between items-end border-b pb-4">
                 <div>
-                    <label class="block text-gray-600 text-sm font-semibold mb-2">E-mail da Conta (Leitura)</label>
-                    <input type="email" id="edit-email" readonly class="w-full bg-gray-100 border border-gray-300 text-gray-500 rounded px-3 py-2 text-sm cursor-not-allowed">
+                    <h2 class="text-2xl font-bold text-gray-800">Gestão de Privilégios (RBAC + ABAC)</h2>
+                    <p class="text-gray-500 text-sm mt-1">Controle de acessos modulares para colaboradores.</p>
                 </div>
                 <div>
-                    <label class="block text-gray-600 text-sm font-semibold mb-2">Nome do Colaborador</label>
-                    <input type="text" id="edit-nome" class="w-full bg-white border border-gray-300 text-gray-800 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="Ex: João Silva">
-                </div>
-                <div>
-                    <label class="block text-gray-600 text-sm font-semibold mb-2">Nível Corporativo (Role Geral)</label>
-                    <select id="edit-role" class="w-full bg-white border border-gray-300 text-gray-800 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
-                        <option value="Operador">Operador (Base)</option>
-                        <option value="Supervisão">Supervisão / Fiscal</option>
-                        <option value="Gerência">Gerência</option>
-                        <option value="Admin">Admin Master</option>
-                    </select>
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-300" id="status-edicao">Selecione um usuário abaixo</span>
                 </div>
             </div>
 
-            <h3 class="text-md font-bold text-[#2C3E50] mb-4 border-b pb-2">Liberação de Módulos e Funcionalidades Específicas</h3>
-            
-            <div class="bg-gray-50 p-4 rounded border border-gray-200">
-                <div class="mb-4 flex items-center">
-                    <span class="text-blue-600 font-bold mr-2">📍 Sistema de Rondas:</span>
+            <div class="bg-white border rounded-xl shadow-sm p-6 mb-8" id="painel-edicao" style="display: none;">
+                <input type="hidden" id="edit-user-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-gray-600 text-sm font-semibold mb-2">E-mail da Conta (Leitura)</label>
+                        <input type="email" id="edit-email" readonly class="w-full bg-gray-100 border border-gray-300 text-gray-500 rounded px-3 py-2 text-sm cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm font-semibold mb-2">Nome do Colaborador</label>
+                        <input type="text" id="edit-nome" class="w-full bg-white border border-gray-300 text-gray-800 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="Ex: João Silva">
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm font-semibold mb-2">Nível Corporativo (Role Geral)</label>
+                        <select id="edit-role" class="w-full bg-white border border-gray-300 text-gray-800 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                            <option value="Operador">Operador (Base)</option>
+                            <option value="Supervisão">Supervisão / Fiscal</option>
+                            <option value="Gerência">Gerência</option>
+                            <option value="Admin">Admin Master</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="text-md font-bold text-[#2C3E50] mb-4 border-b pb-2">Liberação de Módulos e Funcionalidades Específicas</h3>
+                
+                <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                    <div class="mb-4 flex items-center">
+                        <span class="text-blue-600 font-bold mr-2">📍 Sistema de Rondas:</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-6">
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="perm-ronda-acesso" class="rounded text-blue-600 h-4 w-4">
+                            <span>Permitir Acesso ao Módulo</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="perm-ronda-admin" class="rounded text-blue-600 h-4 w-4">
+                            <span>Nível Administrador (Gerir Postos)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="perm-ronda-retroativa" class="rounded text-blue-600 h-4 w-4">
+                            <span>Permitir Lançamento de Terceiros</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="salvarPrivilegios()" class="w-full mt-6 bg-[#27AE60] hover:bg-[#219653] text-white font-bold py-3 rounded transition shadow">
+                    Salvar Alterações de Acesso
+                </button>
+            </div>
+
+            <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-gray-700">Contas e Acessos Registados</h3>
+                    <input type="text" id="busca-usuarios" placeholder="🔍 Buscar por nome..." class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500 w-64" onkeyup="filtrarTabela()">
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-6">
-                    <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="checkbox" id="perm-ronda-acesso" class="rounded text-blue-600 h-4 w-4">
-                        <span>Permitir Acesso ao Módulo</span>
-                    </label>
-                    <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="checkbox" id="perm-ronda-admin" class="rounded text-blue-600 h-4 w-4">
-                        <span>Nível Administrador (Gerir Postos)</span>
-                    </label>
-                    <label class="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="checkbox" id="perm-ronda-retroativa" class="rounded text-blue-600 h-4 w-4">
-                        <span>Permitir Lançamento de Terceiros</span>
-                    </label>
-                </div>
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-[#34495E] text-white">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Colaborador</th>
+                            <th class="px-6 py-3 font-semibold">Role Base</th>
+                            <th class="px-6 py-3 font-semibold">Status Ronda</th>
+                            <th class="px-6 py-3 text-right font-semibold">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-usuarios" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">A carregar dados do Supabase...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <button onclick="salvarPrivilegios()" class="w-full mt-6 bg-[#27AE60] hover:bg-[#219653] text-white font-bold py-3 rounded transition shadow">
-                Salvar Alterações de Acesso
-            </button>
-        </div>
+        </section>
 
-        <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
-            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                <h3 class="font-bold text-gray-700">Contas e Acessos Registados</h3>
-                <input type="text" id="busca-usuarios" placeholder="🔍 Buscar por nome..." class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500 w-64" onkeyup="filtrarTabela()">
-            </div>
-            
-            <table class="w-full text-left text-sm text-gray-600">
-                <thead class="bg-[#34495E] text-white">
-                    <tr>
-                        <th class="px-6 py-3 font-semibold">Colaborador</th>
-                        <th class="px-6 py-3 font-semibold">Role Base</th>
-                        <th class="px-6 py-3 font-semibold">Status Ronda</th>
-                        <th class="px-6 py-3 text-right font-semibold">Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-usuarios" class="divide-y divide-gray-200">
-                    <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">A carregar dados do Supabase...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <section id="aba-rondas" class="tab-content h-full">
+            <iframe src="https://quantica-seguranca.github.io/Rondas_OPS/" class="w-full h-[85vh] border-none rounded-xl shadow-sm bg-white"></iframe>
+        </section>
 
-    </main>
-
+</main>
     <script>
         // --- COLOQUE SUA CHAVE AQUI ---
         const supabaseUrl = 'https://mhhsbdwewohiisnhwxpy.supabase.co';
@@ -243,6 +253,27 @@
             const filtrados = listaUsuarios.filter(u => (u.full_name || '').toLowerCase().includes(termo));
             renderTabela(filtrados);
         }
+
+        // --- INÍCIO DO CÓDIGO ADICIONADO (Motor das Abas) ---
+        function mudarAba(aba) {
+            // Oculta todas as abas
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            
+            // Remove a cor de destaque de todos os botões do menu
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-[#34495E]', 'text-white', 'border-l-4', 'border-green-500');
+                el.classList.add('hover:bg-[#34495E]', 'text-gray-300');
+            });
+
+            // Mostra a aba clicada
+            document.getElementById('aba-' + aba).classList.add('active');
+            
+            // Pinta o botão clicado
+            const btn = document.getElementById('btn-' + aba);
+            btn.classList.remove('hover:bg-[#34495E]', 'text-gray-300');
+            btn.classList.add('bg-[#34495E]', 'text-white', 'border-l-4', 'border-green-500');
+        }
+        // --- FIM DO CÓDIGO ADICIONADO ---
 
         async function handleLogout() {
             await sb.auth.signOut();
