@@ -119,21 +119,6 @@
                         </label>
                     </div>
                 </div>
-                ```
-
-#### Passo 1.2: Fazer o Painel Ler os dados guardados ao clicar em Gerir Acesso
-**🔍 Onde procurar:** No JavaScript, dentro da função `function abrirEdicao(index)`[cite: 562].
-
-// Checkboxes de Rondas
-            document.getElementById('perm-ronda-acesso').checked = perms.ronda_acesso || false;
-            document.getElementById('perm-ronda-admin').checked = perms.ronda_admin || false;
-            document.getElementById('perm-ronda-retroativa').checked = perms.ronda_retroativa || false;
-
-            // CÓDIGO ADICIONADO: Carregar permissões do Portal
-            document.getElementById('perm-portal-acesso').checked = perms.portal_acesso || false;
-            document.getElementById('perm-portal-admin').checked = perms.portal_admin || false;
-
-            document.getElementById('painel-edicao').style.display = 'block';
 
                 <button onclick="salvarPrivilegios()" class="w-full mt-6 bg-[#27AE60] hover:bg-[#219653] text-white font-bold py-3 rounded transition shadow">
                     Salvar Alterações de Acesso
